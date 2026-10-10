@@ -37,9 +37,9 @@ export const envSchema = z.object({
   // CORS_OTHER_ORIGINS: z.string().optional(),  CORS_OTHER_URL
 
   // Email
-  // SMTP_USER: z.string().optional(),
-  // SMTP_PASS: z.string().optional(),
-  // SMTP_FROM: z.string().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_FROM: z.string().optional(),
 
   // Elasticsearch
   // ELASTICSEARCH_NODE: z.string().optional(),

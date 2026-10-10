@@ -1,5 +1,7 @@
 import { ValueTransformer } from 'typeorm';
 
+// Mục đích chính: Database lưu DECIMAL, nhưng khi lấy ra trong TypeScript thì muốn nhận được number thay vì string.
+
 export const decimalColumnTransformer: ValueTransformer = {
   to: (value?: number | null) => value, // chạy khi ghi dữ liệu từ TypeScript → Database
 
