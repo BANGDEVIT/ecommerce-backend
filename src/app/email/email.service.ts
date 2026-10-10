@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
+import { PinoLogger } from 'nestjs-pino';
 import { ConfigService } from '@nestjs/config';
 
 export interface EmailOptions {
@@ -17,8 +17,9 @@ export class EmailService {
 
   constructor(
     private readonly configService: ConfigService,
-    @InjectPinoLogger(EmailService.name) private readonly logger: PinoLogger,
+    private readonly logger: PinoLogger,
   ) {
+    this.logger.setContext(EmailService.name);
     this.createTransporter(); // tạo transporter ngay lúc vừa mới khởi tạo Email Service
   }
 
