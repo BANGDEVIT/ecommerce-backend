@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { IncomingHttpHeaders } from 'http';
 import { Repository } from 'typeorm';
 import { Session } from '../entities/session.entity';
 import { extractSessionTokenFromHeaders } from 'src/shared/utils/request-session.util';
@@ -11,13 +12,19 @@ export class SessionAuthService {
     private readonly sessionRepo: Repository<Session>,
   ) {}
 
-  async resolveSessionContext(
-    headers: Record<string, string | string[] | null>,
-  ) {
+  /**
+   * Lấy session + user từ headers của request.
+   * Trả về null nếu không có token, token không tồn tại, session hết hạn
+   * hoặc user không còn (đã bị xoá).
+   *
+   * @param headers truyền thẳng req.headers
+   */
+  async resolveSessionContext(headers: IncomingHttpHeaders) {
     const token = extractSessionTokenFromHeaders(headers);
     if (!token) {
       return null;
     }
+
     const row = await this.sessionRepo.findOne({
       where: { token },
       relations: {
@@ -38,9 +45,8 @@ export class SessionAuthService {
     return null;
   }
 
-  async resolveAuthenticateUser(
-    headers: Record<string, string | string[] | null>,
-  ) {
+  /** Chỉ lấy user hiện tại (hoặc null nếu chưa đăng nhập). */
+  async resolveAuthenticateUser(headers: IncomingHttpHeaders) {
     const ctx = await this.resolveSessionContext(headers);
     return ctx?.user ?? null;
   }

@@ -10,15 +10,20 @@ import { apiBadRequest } from 'src/shared/helpers/api-i18n';
 export class AuthService {
   constructor(
     @InjectRepository(Verification)
-    private readonly vertificationRepository: Repository<Verification>,
+    private readonly verificationRepository: Repository<Verification>,
     private readonly logger: PinoLogger,
     private readonly userService: UserService,
   ) {
     this.logger.setContext(AuthService.name);
   }
 
+  /**
+   * Xác minh email bằng token trong bảng verification.
+   * Lưu ý: apiBadRequest phải THROW (kiểu trả về `never`),
+   * nếu không code sẽ chạy tiếp và crash ở record.expiresAt khi record = null.
+   */
   async verifyEmailCustomer(token: string, email: string) {
-    const record = await this.vertificationRepository.findOne({
+    const record = await this.verificationRepository.findOne({
       where: { value: token },
     });
 
@@ -28,7 +33,8 @@ export class AuthService {
     }
 
     if (record.expiresAt.getTime() < Date.now()) {
-      this.vertificationRepository.delete({ id: record.id });
+      // phải await, nếu không lệnh xoá chạy ngầm và lỗi (nếu có) bị nuốt mất
+      await this.verificationRepository.delete({ id: record.id });
       this.logger.warn({ msg: 'auth.verify.tokenExpired', email });
       apiBadRequest('errors.auth.tokenExpired');
     }
@@ -36,21 +42,22 @@ export class AuthService {
     if (record.identifier.toLowerCase() !== email.toLowerCase()) {
       this.logger.warn({
         msg: 'auth.verify.emailMismatch',
-        TokenEmail: record.identifier,
+        tokenEmail: record.identifier,
         providedEmail: email,
       });
       apiBadRequest('errors.auth.emailMismatch');
     }
 
-    await this.vertificationRepository.delete({ id: record.id });
+    // Xác minh user TRƯỚC, xoá token SAU:
+    // nếu verifyUser lỗi (vd không tìm thấy user) thì token vẫn còn để thử lại
     await this.userService.verifyUser(email);
+    await this.verificationRepository.delete({ id: record.id });
 
-    this.logger.info({ msg: 'auth.email.verify', email });
+    this.logger.info({ msg: 'auth.email.verified', email });
 
     return {
       success: true,
       message: 'Xác thực email thành công',
-      user: null,
     };
   }
 }

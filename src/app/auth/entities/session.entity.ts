@@ -9,7 +9,6 @@ export class Session extends BaseUuidEntity {
   expiresAt: Date;
 
   @Column({ type: 'text', unique: true })
-  @Index()
   token: string;
 
   @Column({ type: 'text', nullable: true })

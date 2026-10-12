@@ -8,6 +8,7 @@ export class Verification extends BaseUuidEntity {
   identifier: string;
 
   @Column({ type: 'text' })
+  @Index()
   value: string;
 
   @Column({ type: 'timestamptz' })

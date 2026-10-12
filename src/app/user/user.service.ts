@@ -11,17 +11,30 @@ export class UserService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async verifyUser(email: string) {
-    const user = await this.userRepository.findOne({ where: { email: email } });
+  /**
+   * Đánh dấu email của user là đã xác minh.
+   * Nếu user đã xác minh từ trước thì bỏ qua (không update lại emailVerifiedAt).
+   */
+  async verifyUser(email: string): Promise<void> {
+    const user = await this.userRepository.findOne({
+      where: { email: email.toLowerCase() }, // Better Auth lưu email ở dạng chữ thường
+    });
 
     if (!user) {
       apiNotFound('errors.common.userNotFound');
     }
 
-    return this.userRepository.update({ id: user.id }, { emailVerified: true });
+    if (user.emailVerified) {
+      return;
+    }
+
+    await this.userRepository.update(
+      { id: user.id },
+      { emailVerified: true, emailVerifiedAt: new Date() },
+    );
   }
 
-  getUser(id: string) {
-    return this.userRepository.findOne({ where: { id } });
+  async getUser(id: string): Promise<User | null> {
+    return await this.userRepository.findOne({ where: { id } });
   }
 }
